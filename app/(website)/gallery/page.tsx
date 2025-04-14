@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 
 const images = [
@@ -37,7 +39,7 @@ const images = [
 const categories = ['All', 'Web Development', 'Mobile Apps', 'UI/UX Design'];
 
 export default function Gallery() {
-  const [selectedCategory, setSelectedCategory] = React.useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   const filteredImages = selectedCategory === 'All'
     ? images
