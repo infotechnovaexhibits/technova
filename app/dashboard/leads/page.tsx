@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useGetLeadsQuery, useUpdateLeadMutation } from '../../../lib/redux/services/leadsApi';
 import {
   Dialog,
   DialogContent,
@@ -21,81 +22,52 @@ import {
   SelectValue,
 } from "../../../components/ui/select";
 import { PlusIcon, PencilIcon } from "@heroicons/react/24/solid";
+import { toast } from "sonner";
 
-type Lead = {
+interface Lead {
   id: string;
   name: string;
   email: string;
   phone: string;
   message: string;
   status: "new" | "contacted";
-};
-
-const initialLeads: Lead[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "+1234567890",
-    message: "Interested in exhibition services",
-    status: "new",
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane@company.com",
-    phone: "+1987654321",
-    message: "Need quote for upcoming event",
-    status: "contacted",
-  },
-];
+  createdAt: string;
+}
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>(initialLeads);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [filter, setFilter] = useState<Lead["status"] | "all">("all");
-  const [isLoading, setIsLoading] = useState(false);
+
+  // RTK Query hooks
+  const { data: leads = [], isLoading, error } = useGetLeadsQuery();
+  const [updateLead] = useUpdateLeadMutation();
 
   const filteredLeads = leads
-    .filter((lead) => filter === "all" ? true : lead.status === filter);
+    ?.filter((lead: Lead) => filter === "all" ? true : lead.status == filter)
 
-  const handleAdd = async (formData: FormData) => {
-    setIsLoading(true);
-    try {
-      const newLead: Lead = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: formData.get("name") as string,
-        email: formData.get("email") as string,
-        phone: formData.get("phone") as string,
-        message: formData.get("message") as string,
-        status: "new",
-      };
-      setLeads([...leads, newLead]);
-      setIsAddDialogOpen(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleStatusChange = async (formData: FormData) => {
     if (!selectedLead) return;
-    setIsLoading(true);
+    
     try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      const newStatus = formData.get("status") as Lead["status"];
-      setLeads(
-        leads.map((lead) =>
-          lead.id === selectedLead.id ? { ...lead, status: newStatus } : lead
-        )
-      );
+      const updatedLead = {
+        id: selectedLead.id,
+        status: formData.get("status") as Lead["status"],
+      };
+      
+      await updateLead(updatedLead).unwrap();
       setIsEditDialogOpen(false);
-    } finally {
-      setIsLoading(false);
       setSelectedLead(null);
+      toast.success('Lead status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update lead status');
     }
   };
+
+  if (error) {
+    return <div className="p-4 text-red-500">Error loading leads</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -130,7 +102,13 @@ export default function LeadsPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredLeads.map((lead) => (
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-4 text-center">
+                  Loading...
+                </td>
+              </tr>
+            ) : filteredLeads.map((lead: Lead) => (
               <tr key={lead.id} className="bg-white border-b hover:bg-gray-50">
                 <td className="px-6 py-4 font-medium">{lead.name}</td>
                 <td className="px-6 py-4">{lead.email}</td>
@@ -196,35 +174,8 @@ export default function LeadsPage() {
                           <Button 
                             type="submit" 
                             disabled={isLoading}
-                            className="relative"
                           >
-                            {isLoading ? (
-                              <>
-                                <svg
-                                  className="animate-spin -ml-1 mr-2 h-4 w-4"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  />
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                  />
-                                </svg>
-                                <span>Saving...</span>
-                              </>
-                            ) : (
-                              'Save Changes'
-                            )}
+                            Save Changes
                           </Button>
                         </DialogFooter>
                       </form>

@@ -18,15 +18,11 @@ export default function WebsiteLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`min-h-screen bg-background antialiased ${inter.className}`}>
-        <div className="flex min-h-screen flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
-        <FloatingButtons />
-      </body>
-    </html>
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-1">{children}</main>
+      <Footer />
+      <FloatingButtons />
+    </div>
   );
 } 

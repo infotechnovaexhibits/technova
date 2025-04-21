@@ -2,7 +2,11 @@
 const nextConfig = {
   /* config options here */
   images: {
-    domains: ['dummyimage.com'],
+    remotePatterns: [
+      {
+        hostname: 'dummyimage.com',
+      },
+    ],
   },
 };
 

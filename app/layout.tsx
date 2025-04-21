@@ -26,11 +26,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn("min-h-screen bg-background antialiased", inter.className)}>
-          <ReduxProvider>
-            {children}
-          </ReduxProvider>
-        <Toaster />
+      <body className={cn(inter.className, "min-h-screen bg-background antialiased")}>
+        <ReduxProvider>
+          {children}
+          <Toaster />
+        </ReduxProvider>
       </body>
     </html>
   )
