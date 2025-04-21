@@ -19,7 +19,7 @@ export default function WebsiteLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`min-h-screen bg-background antialiased ${inter.className}`}>
         <div className="flex min-h-screen flex-col">
           <Header />
           <main className="flex-1">{children}</main>

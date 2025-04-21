@@ -1,45 +1,60 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { motion, useInView } from 'framer-motion';
 
 const stats = [
-  { label: "Events Completed", value: 500, suffix: "+" },
-  { label: "Happy Clients", value: 200, suffix: "+" },
-  { label: "Years Experience", value: 15, suffix: "+" },
-  { label: "Team Members", value: 50, suffix: "+" }
+  {
+    value: "1000+",
+    label: "Exhibitions Designed",
+  },
+  {
+    value: "60+",
+    label: "Global Markets",
+  },
+  {
+    value: "99%",
+    label: "Client Retention",
+  },
+  {
+    value: "20+",
+    label: "Years of Excellence",
+  },
 ];
 
 const Counter = ({ value, suffix }: { value: number; suffix: string }) => {
   const [count, setCount] = useState(0);
-  const [ref, inView] = useInView({ triggerOnce: true });
+  const counterRef = React.useRef(null);
+  const isInView = useInView(counterRef, { once: true });
 
   useEffect(() => {
-    if (inView) {
-      const duration = 2000; // 2 seconds
-      const steps = 60;
-      const increment = value / steps;
-      let current = 0;
+    if (!isInView) return;
 
-      const timer = setInterval(() => {
-        current += increment;
-        if (current >= value) {
-          setCount(value);
-          clearInterval(timer);
-        } else {
-          setCount(Math.floor(current));
-        }
-      }, duration / steps);
+    const duration = 2000; // 2 seconds
+    const steps = 60;
+    const stepTime = duration / steps;
+    const increment = value / steps;
+    let currentStep = 0;
 
-      return () => clearInterval(timer);
-    }
-  }, [inView, value]);
+    const timer = setInterval(() => {
+      currentStep += 1;
+      if (currentStep >= steps) {
+        setCount(value);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(currentStep * increment));
+      }
+    }, stepTime);
+
+    return () => clearInterval(timer);
+  }, [value, isInView]);
 
   return (
-    <div ref={ref} className="text-center">
-      <span className="text-6xl font-bold text-primary-500">
+    <div ref={counterRef} className="flex items-end justify-center gap-1">
+      <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
         {count}
+      </span>
+      <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
         {suffix}
       </span>
     </div>
@@ -48,27 +63,69 @@ const Counter = ({ value, suffix }: { value: number; suffix: string }) => {
 
 export const StatsSection = () => {
   return (
-    <section className="py-20 bg-gradient-to-b from-primary-50 to-white relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[url('/patterns/circuit.svg')] opacity-5" />
-      
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+    <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="text-center max-w-3xl mx-auto mb-12"
+        >
+          <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
+            Our Impact in Numbers
+          </h2>
+          <p className="text-gray-600 text-sm md:text-base">
+            Delivering excellence across global exhibitions and events
+          </p>
+        </motion.div>
+
+        {/* Background Design */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50">
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+            <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+            <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {stats.map((stat, index) => (
             <motion.div
-              key={index}
+              key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="text-center bg-white rounded-xl p-8 shadow-[0_0_50px_-12px_rgb(0,160,209,0.1)] hover:shadow-[0_0_50px_-12px_rgb(0,160,209,0.2)] transition-all border border-primary-100"
+              className="bg-white rounded-lg p-6 text-center shadow-sm hover:shadow-md transition-shadow"
             >
-              <Counter value={stat.value} suffix={stat.suffix} />
-              <p className="text-primary-700 mt-2 font-medium text-lg">{stat.label}</p>
+              <h3 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                {stat.value}
+              </h3>
+              <p className="text-gray-600 text-sm md:text-base">{stat.label}</p>
             </motion.div>
           ))}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+      `}</style>
     </section>
   );
 }; 

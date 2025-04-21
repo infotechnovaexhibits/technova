@@ -1,76 +1,109 @@
-import React from 'react';
-import { 
-  Users, 
-  DollarSign, 
-  TrendingUp, 
-  Activity 
-} from 'lucide-react';
+"use client";
 
-const DashboardPage = () => {
+import { useState } from "react";
+import { Card } from "../../components/ui/card";
+import {
+  ArrowTrendingUpIcon,
+  UserGroupIcon,
+  ChatBubbleLeftRightIcon,
+  PhoneIcon,
+} from "@heroicons/react/24/outline";
+import Link from "next/link";
+
+export default function DashboardPage() {
+  const stats = [
+    {
+      name: "Total Leads",
+      value: "2,100",
+      change: "+15%",
+      changeType: "positive",
+      icon: UserGroupIcon,
+      link: "/dashboard/leads",
+    },
+    {
+      name: "Active Leads",
+      value: "450",
+      change: "+12%",
+      changeType: "positive",
+      icon: PhoneIcon,
+      link: "/dashboard/leads?status=active",
+    },
+    {
+      name: "Testimonials",
+      value: "48",
+      change: "+8%",
+      changeType: "positive",
+      icon: ChatBubbleLeftRightIcon,
+      link: "/dashboard/testimonials",
+    },
+    {
+      name: "Conversion Rate",
+      value: "24.5%",
+      change: "+5.2%",
+      changeType: "positive",
+      icon: ArrowTrendingUpIcon,
+      link: "/dashboard/analytics",
+    },
+  ];
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">Dashboard Overview</h1>
-      
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500">Total Users</p>
-              <h3 className="text-2xl font-bold">1,234</h3>
-            </div>
-            <div className="bg-blue-100 p-3 rounded-full">
-              <Users className="text-blue-500" size={24} />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500">Revenue</p>
-              <h3 className="text-2xl font-bold">$45,678</h3>
-            </div>
-            <div className="bg-green-100 p-3 rounded-full">
-              <DollarSign className="text-green-500" size={24} />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500">Growth</p>
-              <h3 className="text-2xl font-bold">+12.5%</h3>
-            </div>
-            <div className="bg-purple-100 p-3 rounded-full">
-              <TrendingUp className="text-purple-500" size={24} />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500">Active Users</p>
-              <h3 className="text-2xl font-bold">789</h3>
-            </div>
-            <div className="bg-orange-100 p-3 rounded-full">
-              <Activity className="text-orange-500" size={24} />
-            </div>
-          </div>
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <div className="flex gap-4">
+          <Link
+            href="/dashboard/leads/new"
+            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            Add New Lead
+          </Link>
+          <Link
+            href="/dashboard/testimonials/new"
+            className="inline-flex items-center justify-center rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            Add Testimonial
+          </Link>
         </div>
       </div>
-      
-      {/* Recent Activity */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
-        <div className="space-y-4">
-          {/* Add your recent activity items here */}
-        </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <Link key={stat.name} href={stat.link}>
+              <Card className="p-6 hover:border-blue-500 transition-colors cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="rounded-lg bg-blue-50 p-2">
+                    <Icon className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{stat.name}</p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-2xl font-semibold text-gray-900">
+                        {stat.value}
+                      </p>
+                      <span className="text-sm font-medium text-green-600">
+                        {stat.change}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold mb-4">Recent Leads</h2>
+          {/* Recent leads table will go here */}
+        </Card>
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold mb-4">Latest Testimonials</h2>
+          {/* Recent testimonials list will go here */}
+        </Card>
       </div>
     </div>
   );
-};
-
-export default DashboardPage; 
+} 

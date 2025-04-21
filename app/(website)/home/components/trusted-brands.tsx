@@ -1,81 +1,97 @@
 "use client";
 
-import { motion } from "framer-motion";
-import Image from "next/image";
+import React from 'react';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
 
 const brands = [
   {
-    name: "TechCorp",
-    logo: "/brands/techcorp.png",
-    width: 120,
-    height: 40
+    name: "Microsoft",
+    logo: "/images/brands/microsoft.svg",
+    grayscale: true
   },
   {
-    name: "Global Events",
-    logo: "/brands/global-events.png",
-    width: 120,
-    height: 40
+    name: "Google",
+    logo: "/images/brands/google.svg",
+    grayscale: true
   },
   {
-    name: "Innovate Solutions",
-    logo: "/brands/innovate.png",
-    width: 120,
-    height: 40
+    name: "Apple",
+    logo: "/images/brands/apple.svg",
+    grayscale: true
   },
   {
-    name: "Future Tech",
-    logo: "/brands/future-tech.png",
-    width: 120,
-    height: 40
+    name: "Amazon",
+    logo: "/images/brands/amazon.svg",
+    grayscale: true
   },
   {
-    name: "Digital Wave",
-    logo: "/brands/digital-wave.png",
-    width: 120,
-    height: 40
+    name: "Samsung",
+    logo: "/images/brands/samsung.svg",
+    grayscale: true
   },
   {
-    name: "Smart Systems",
-    logo: "/brands/smart-systems.png",
-    width: 120,
-    height: 40
+    name: "IBM",
+    logo: "/images/brands/ibm.svg",
+    grayscale: true
+  },
+  {
+    name: "Intel",
+    logo: "/images/brands/intel.svg",
+    grayscale: true
+  },
+  {
+    name: "Oracle",
+    logo: "/images/brands/oracle.svg",
+    grayscale: true
   }
 ];
 
 export const TrustedBrands = () => {
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-16 bg-gradient-to-b from-white to-gray-50 overflow-hidden">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center max-w-3xl mx-auto mb-12"
         >
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Trusted By Leading Brands</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            We've had the privilege of working with some of the most innovative companies in the industry.
+          <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
+            Trusted by Global Brands
+          </h2>
+          <p className="text-gray-600 text-sm md:text-base">
+            We've helped leading companies create impactful exhibition experiences worldwide
           </p>
         </motion.div>
+      </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center">
-          {brands.map((brand, index) => (
+      {/* Marquee Container */}
+      <div className="relative">
+        {/* Gradient Overlays */}
+        <div className="absolute left-0 top-0 bottom-0 w-40 bg-gradient-to-r from-white to-transparent z-10" />
+        <div className="absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-white to-transparent z-10" />
+
+        {/* First Marquee */}
+        <div className="flex gap-12 animate-marquee items-center">
+          {[...brands, ...brands].map((brand, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="flex items-center justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300"
+              className="flex-shrink-0 w-[180px] h-[100px] relative group"
             >
-              <div className="relative w-full h-12">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative h-full w-full flex items-center justify-center p-6">
                 <Image
                   src={brand.logo}
                   alt={brand.name}
-                  width={brand.width}
-                  height={brand.height}
-                  className="object-contain"
+                  width={120}
+                  height={60}
+                  className={`${brand.grayscale ? 'grayscale' : ''} group-hover:grayscale-0 group-hover:scale-110 transition-all duration-300`}
                 />
               </div>
             </motion.div>

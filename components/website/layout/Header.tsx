@@ -26,11 +26,11 @@ export default function Header() {
           <div className="flex lg:flex-1">
             <Link href="/" className="-m-1.5 p-1.5">
               <Image 
-                src="/logo.png"
+                src="/logo-new.png"
                 alt="Logo"
-                width={300}
-                height={91}
-                className="h-24 w-auto"
+                width={250}
+                height={40}
+                className="h-20 w-auto"
               />
             </Link>
           </div>
@@ -49,7 +49,7 @@ export default function Header() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-sm font-semibold leading-6 text-gray-900 hover:text-orange-500 transition-colors"
+                className="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600 transition-colors"
               >
                 {item.name}
               </Link>
@@ -58,7 +58,7 @@ export default function Header() {
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
             <button
               onClick={() => setIsContactFormOpen(true)}
-              className="rounded-full bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 transition-colors"
+              className="rounded-full bg-gradient-to-r from-blue-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-blue-700 hover:to-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all"
             >
               Send a message
             </button>
@@ -73,7 +73,7 @@ export default function Header() {
           <div className="flex items-center justify-between">
             <Link href="/" className="-m-1.5 p-1.5">
               <Image 
-                src="/logo.png"
+                src="/logo-new.png"
                 alt="Logo"
                 width={200}
                 height={61}
@@ -96,7 +96,7 @@ export default function Header() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:text-blue-600"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {item.name}

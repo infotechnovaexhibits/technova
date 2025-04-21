@@ -2,15 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FaFacebook, FaWhatsapp, FaLinkedin, FaInstagram, FaYoutube, FaPinterest } from 'react-icons/fa';
+import { FaFacebook, FaWhatsapp, FaLinkedin } from 'react-icons/fa';
 
 const socialLinks = [
   { icon: FaFacebook, href: "https://facebook.com" },
   { icon: FaWhatsapp, href: "https://wa.me/+971565010555" },
   { icon: FaLinkedin, href: "https://linkedin.com" },
-  { icon: FaInstagram, href: "https://instagram.com" },
-  { icon: FaYoutube, href: "https://youtube.com" },
-  { icon: FaPinterest, href: "https://pinterest.com" }
 ];
 
 const quickLinks = [
@@ -88,7 +85,7 @@ const Footer = () => {
                   <div className="border-l-2 border-black h-20 mx-4"></div>
                   <div className="flex items-center gap-4">
                     <span className="text-5xl font-bold tracking-tight">...</span>
-                    <div className="h-12 w-12 bg-black rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors">
+                    <div className="h-12 w-12 bg-black rounded-full flex items-center justify-center hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 transition-colors">
                       <span className="text-white text-2xl">→</span>
                     </div>
                   </div>
@@ -97,7 +94,7 @@ const Footer = () => {
             </div>
             <p className="text-lg text-gray-700">
               Looking for <span className="font-semibold">collaboration</span> ? Send an email to{' '}
-              <a href="mailto:info@technovaexhibits.com" className="text-orange-500 hover:text-orange-600">
+              <a href="mailto:info@technovaexhibits.com" className="text-blue-600 hover:text-purple-600">
                 info@technovaexhibits.com
               </a>{' '}
               for enquires and collaborations.
@@ -106,11 +103,13 @@ const Footer = () => {
 
           {/* Address Section */}
           <div className="lg:col-span-1">
-            <h3 className="text-lg font-semibold mb-4">Offices</h3>
+            <h3 className="text-lg font-semibold mb-4">Office</h3>
             <div>
-              <h4 className="font-semibold text-gray-900">Dubai UAE:</h4>
-              <p className="mt-1 text-gray-600">Business Bay, PO Box 42796, Dubai, United Arab Emirates</p>
-              <p className="mt-1 text-gray-900 font-medium">+971 565 010 555</p>
+            <p className="text-gray-600">GH-2/9 block - D,</p>
+                    <p className="text-gray-600">Inderprastha Awasiya Yojna</p>
+                    <p className="text-gray-600">Loni, Ghaziabad - 201102</p>      
+                    <p className="text-gray-600">Email: contact@technovaexhibits.com</p>
+                            <p className="mt-1 text-gray-900 font-medium">+91 9818000000</p>
             </div>
             <div className="mt-8">
               <div className="flex gap-6">
@@ -120,7 +119,7 @@ const Footer = () => {
                     <Link
                       key={index}
                       href={social.href}
-                      className="text-black hover:text-orange-500 transition-colors"
+                      className="text-black hover:text-blue-600 transition-colors"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -140,7 +139,7 @@ const Footer = () => {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="block text-base text-gray-900 hover:text-orange-500 transition-colors"
+                  className="block text-base text-gray-900 hover:text-blue-600 transition-colors"
                 >
                   {link.name}
                 </Link>
@@ -155,10 +154,10 @@ const Footer = () => {
             COPYRIGHT 2025 © | TECHNOVA EXHIBITS | ALL RIGHTS RESERVED
           </p>
           <div className="flex gap-6 mt-4 lg:mt-0">
-            <Link href="/privacy-policy" className="text-sm text-gray-500 hover:text-orange-500">
+            <Link href="/privacy-policy" className="text-sm text-gray-500 hover:text-blue-600">
               Privacy Policy
             </Link>
-            <Link href="/terms-conditions" className="text-sm text-gray-500 hover:text-orange-500">
+            <Link href="/terms-conditions" className="text-sm text-gray-500 hover:text-blue-600">
               Terms & Conditions
             </Link>
           </div>

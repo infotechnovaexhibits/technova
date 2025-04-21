@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, MessageCircle, Github, Linkedin, Twitter } from 'lucide-react';
+import { ArrowUp, MessageCircle, Phone, Facebook, Linkedin, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const FloatingButtons = () => {
@@ -22,9 +22,30 @@ const FloatingButtons = () => {
   };
 
   const socialLinks = [
-    { icon: Github, href: 'https://github.com/yourusername' },
-    { icon: Linkedin, href: 'https://linkedin.com/in/yourusername' },
-    { icon: Twitter, href: 'https://twitter.com/yourusername' },
+    { 
+      icon: Phone, 
+      href: 'tel:+919773584542',
+      bgColor: 'bg-gradient-to-r from-blue-600 to-purple-600',
+      hoverBgColor: 'hover:opacity-90'
+    },
+    { 
+      icon: Linkedin, 
+      href: 'https://linkedin.com/company/your-company',
+      bgColor: 'bg-gradient-to-r from-blue-600 to-purple-600',
+      hoverBgColor: 'hover:opacity-90'
+    },
+    { 
+      icon: Facebook, 
+      href: 'https://facebook.com/your-page',
+      bgColor: 'bg-gradient-to-r from-blue-600 to-purple-600',
+      hoverBgColor: 'hover:opacity-90'
+    },
+    { 
+      icon: MessageCircle, 
+      href: 'https://wa.me/919318415813',
+      bgColor: 'bg-gradient-to-r from-blue-600 to-purple-600',
+      hoverBgColor: 'hover:opacity-90'
+    }
   ].reverse(); // Reverse the array so icons appear from bottom to top
 
   const containerVariants = {
@@ -69,7 +90,7 @@ const FloatingButtons = () => {
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-blue-400 text-white p-3 rounded-full shadow-lg hover:bg-blue-500 transition-colors"
+                className={`${social.bgColor} ${social.hoverBgColor} text-white p-3 rounded-full shadow-lg transition-all duration-300`}
               >
                 <social.icon size={20} />
               </motion.a>
@@ -81,9 +102,9 @@ const FloatingButtons = () => {
       <div className="flex flex-col gap-4">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-blue-400 text-white p-3 rounded-full shadow-lg hover:bg-blue-500 transition-colors"
+          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded-full shadow-lg hover:opacity-90 transition-all duration-300"
         >
-          <MessageCircle size={20} />
+          {isOpen ? <X size={20} /> : <MessageCircle size={20} />}
         </button>
 
         <AnimatePresence>
@@ -93,7 +114,7 @@ const FloatingButtons = () => {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               onClick={scrollToTop}
-              className="bg-blue-400 text-white p-3 rounded-full shadow-lg hover:bg-blue-500 transition-colors"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded-full shadow-lg hover:opacity-90 transition-all duration-300"
             >
               <ArrowUp size={20} />
             </motion.button>

@@ -1,8 +1,6 @@
 import { HeroSection } from "./home/components/hero-section";
 import { ServicesSection } from "./home/components/services-section";
 import { StatsSection } from "./home/components/stats-section";
-import { WhyChooseUs } from "./home/components/why-choose-us";
-import { FeaturedProjects } from "./home/components/featured-projects";
 import { TrustedBrands } from "./home/components/trusted-brands";
 import { TestimonialsSection } from "./home/components/testimonials-section";
 import { OurProcess } from "./home/components/our-process";
@@ -23,20 +21,14 @@ export default function Home() {
       {/* Key Statistics */}
       <StatsSection />
 
-      {/* Why Choose Us */}
-      <WhyChooseUs />
-
-      {/* Featured Projects/Recent Work */}
-      <FeaturedProjects />
+      {/* Our Process */}
+      <OurProcess />
 
       {/* Trusted Brands */}
       <TrustedBrands />
 
       {/* Client Testimonials */}
       <TestimonialsSection />
-
-      {/* Our Process */}
-      <OurProcess />
 
       {/* Contact CTA */}
       <ContactCTA />
