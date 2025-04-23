@@ -20,19 +20,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
+  // Only protect dashboard routes
+  if (request.nextUrl.pathname.startsWith('/dashboard')) {
+    // Check if user is authenticated
+    const isAuthenticated = request.cookies.has('auth_token');
+
+    if (!isAuthenticated) {
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
 // Configure which paths the middleware should run on
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/dashboard/:path*']
 }; 

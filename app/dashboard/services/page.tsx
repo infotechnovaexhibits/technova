@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Card, CardContent } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -10,362 +14,385 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "../../../components/ui/dialog";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import { Label } from "../../../components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../components/ui/select";
-import { PlusIcon, PencilIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, PencilIcon, TrashIcon, ImageIcon, Loader2 } from "lucide-react";
 import Image from "next/image";
-
-type Service = {
-  id: string;
-  order: number;
-  name: string;
-  slug: string;
-  description: string;
-  fullDescription: string;
-  image: string;
-  features: string[];
-  status: "active" | "inactive";
-};
-
-const initialServices: Service[] = [
-  {
-    id: "1",
-    order: 1,
-    name: "Exhibition Stand Design",
-    slug: "exhibition-stand-design",
-    description: "Custom exhibition stand design and build services",
-    fullDescription: "We create stunning exhibition stands that help you stand out...",
-    image: "/services/exhibition1.jpg",
-    features: [
-      "Custom Design",
-      "3D Visualization",
-      "Project Management",
-      "Installation"
-    ],
-    status: "active",
-  },
-  {
-    id: "2",
-    order: 2,
-    name: "Event Management",
-    slug: "event-management",
-    description: "Full-service event planning and management",
-    fullDescription: "End-to-end event management services for corporate events...",
-    image: "/services/event1.jpg",
-    features: [
-      "Venue Selection",
-      "Logistics Management",
-      "On-site Coordination",
-      "Post-event Analysis"
-    ],
-    status: "active",
-  },
-];
+import { toast } from "sonner";
+import { useGetServicesQuery, useAddServiceMutation, useUpdateServiceMutation, useDeleteServiceMutation } from '../../../lib/redux/services/servicesApi';
+import type { Service } from '../../../lib/redux/services/servicesApi';
+import { Textarea } from "../../../components/ui/textarea";
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<Service[]>(initialServices);
+  const { data: services = [], isLoading } = useGetServicesQuery();
+  const [addService, { isLoading: isAdding }] = useAddServiceMutation();
+  const [updateService, { isLoading: isUpdating }] = useUpdateServiceMutation();
+  const [deleteService, { isLoading: isDeleting }] = useDeleteServiceMutation();
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [filter, setFilter] = useState<Service["status"] | "all">("all");
-  const [isLoading, setIsLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filteredServices = services
-    .filter((service) => filter === "all" ? true : service.status === filter)
-    .sort((a, b) => a.order - b.order);
-
-  const handleAdd = async (formData: FormData) => {
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      const maxOrder = Math.max(...services.map(s => s.order), 0);
-      const name = formData.get("name") as string;
-      const newService: Service = {
-        id: Math.random().toString(36).substr(2, 9),
-        order: maxOrder + 1,
-        name,
-        slug: name.toLowerCase().replace(/\s+/g, '-'),
-        description: formData.get("description") as string,
-        fullDescription: formData.get("fullDescription") as string,
-        image: formData.get("image") as string,
-        features: (formData.get("features") as string).split('\n').filter(Boolean),
-        status: "active",
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
       };
-      setServices([...services, newService]);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const resetImage = () => {
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const form = e.currentTarget as HTMLFormElement & {
+        title: HTMLInputElement;
+        shortDescription: HTMLTextAreaElement;
+        longDescription: HTMLTextAreaElement;
+        image: HTMLInputElement;
+      };
+
+      const title = form.title.value;
+      const shortDescription = form.shortDescription.value;
+      const longDescription = form.longDescription.value;
+      const imageFile = form.image.files?.[0];
+
+      if (!title?.trim()) {
+        toast.error('Service title is required');
+        return;
+      }
+
+      if (!shortDescription?.trim()) {
+        toast.error('Short description is required');
+        return;
+      }
+
+      if (!longDescription?.trim()) {
+        toast.error('Long description is required');
+        return;
+      }
+
+      if (!imageFile) {
+        toast.error('Service image is required');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('title', title.trim());
+      formData.append('shortDescription', shortDescription.trim());
+      formData.append('longDescription', longDescription.trim());
+      formData.append('image', imageFile);
+
+      await addService(formData);
+      toast.success('Service added successfully');
       setIsAddDialogOpen(false);
+      setImagePreview(null);
+      form.reset();
+    } catch (error) {
+      console.error('Failed to add service:', error);
+      toast.error('Failed to add service');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleEdit = async (formData: FormData) => {
-    if (!selectedService) return;
-    setIsLoading(true);
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      const name = formData.get("name") as string;
-      const updatedService: Service = {
-        ...selectedService,
-        name,
-        slug: name.toLowerCase().replace(/\s+/g, '-'),
-        description: formData.get("description") as string,
-        fullDescription: formData.get("fullDescription") as string,
-        image: formData.get("image") as string,
-        features: (formData.get("features") as string).split('\n').filter(Boolean),
-        status: formData.get("status") as Service["status"],
+      if (!selectedService?.id) {
+        toast.error('No service selected for update');
+        return;
+      }
+
+      const form = e.currentTarget as HTMLFormElement & {
+        title: HTMLInputElement;
+        shortDescription: HTMLTextAreaElement;
+        longDescription: HTMLTextAreaElement;
+        image: HTMLInputElement;
       };
-      setServices(
-        services.map((service) =>
-          service.id === selectedService.id ? updatedService : service
-        )
-      );
-      setIsEditDialogOpen(false);
-    } finally {
-      setIsLoading(false);
+
+      const formData = new FormData();
+      formData.append('id', selectedService.id);
+      formData.append('title', form.title.value.trim());
+      formData.append('shortDescription', form.shortDescription.value.trim());
+      formData.append('longDescription', form.longDescription.value.trim());
+
+      const imageFile = form.image.files?.[0];
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      await updateService(formData);
+      toast.success('Service updated successfully');
+      setIsAddDialogOpen(false);
       setSelectedService(null);
+      setImagePreview(null);
+      form.reset();
+    } catch (error) {
+      console.error('Failed to update service:', error);
+      toast.error('Failed to update service');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const ServiceForm = ({ service, onSubmit }: { 
-    service?: Service; 
-    onSubmit: (formData: FormData) => Promise<void> | void 
-  }) => (
-    <form 
-      onSubmit={async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        await onSubmit(formData);
-      }} 
-      className="space-y-4"
-    >
-      <div className="grid gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="name">Name</Label>
-          <Input 
-            id="name" 
-            name="name" 
-            defaultValue={service?.name}
-            placeholder="Enter service name" 
-            required 
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="description">Short Description</Label>
-          <Input
-            id="description"
-            name="description"
-            defaultValue={service?.description}
-            placeholder="Enter short description"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="fullDescription">Full Description</Label>
-          <textarea
-            id="fullDescription"
-            name="fullDescription"
-            defaultValue={service?.fullDescription}
-            placeholder="Enter full description"
-            className="min-h-[100px] w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="features">Features (one per line)</Label>
-          <textarea
-            id="features"
-            name="features"
-            defaultValue={service?.features.join('\n')}
-            placeholder="Enter features (one per line)"
-            className="min-h-[100px] w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="image">Image</Label>
-          <div className="flex items-center gap-4">
-            {service?.image && (
-              <div className="relative w-20 h-20">
-                <Image
-                  src={service.image}
-                  alt={service.name}
-                  fill
-                  className="object-cover rounded-md"
-                />
-              </div>
-            )}
-            <Input
-              id="image"
-              name="image"
-              type="file"
-              accept="image/*"
-              className="flex-1"
-              required={!service}
-            />
-          </div>
-        </div>
-        {service && (
-          <div className="grid gap-2">
-            <Label htmlFor="status">Status</Label>
-            <Select name="status" defaultValue={service.status}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </div>
-      <DialogFooter>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <svg
-                className="animate-spin -ml-1 mr-2 h-4 w-4"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              <span>Saving...</span>
-            </>
-          ) : (
-            service ? 'Save Changes' : 'Add Service'
-          )}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteService(id);
+      toast.success('Service deleted successfully');
+      setIsDeleteDialogOpen(false);
+      setSelectedService(null);
+    } catch (error) {
+      toast.error('Failed to delete service');
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Services Management
-        </h1>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
-          <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-500 w-full sm:w-auto">
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Add Service
+    <div className="p-0 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Services</h1>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="inline-flex items-center gap-2">
+              <PlusIcon className="h-4 w-4" />
+              Add Service
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] grid grid-rows-[auto,1fr,auto]">
+            <DialogHeader>
+              <DialogTitle>{selectedService ? 'Edit Service' : 'Add New Service'}</DialogTitle>
+              <DialogDescription>
+                {selectedService ? 'Update service details below.' : 'Add a new service to showcase on your website.'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="overflow-y-auto pr-2">
+              <form id="service-form" onSubmit={selectedService ? handleUpdate : handleAdd} className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="title">Service Title</Label>
+                      <Input
+                        id="title"
+                        name="title"
+                        placeholder="Enter service title"
+                        defaultValue={selectedService?.title}
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="shortDescription">Short Description</Label>
+                      <Textarea
+                        id="shortDescription"
+                        name="shortDescription"
+                        placeholder="Enter a brief description"
+                        defaultValue={selectedService?.shortDescription}
+                        required
+                        className="h-20 resize-none"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="longDescription">Long Description</Label>
+                      <Textarea
+                        id="longDescription"
+                        name="longDescription"
+                        placeholder="Enter detailed description"
+                        defaultValue={selectedService?.longDescription}
+                        required
+                        className="h-[280px] resize-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="image">Service Image</Label>
+                      <div className="flex flex-col items-center gap-4">
+                        {imagePreview ? (
+                          <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+                            <Image
+                              src={imagePreview}
+                              alt="New preview"
+                              fill
+                              className="object-cover rounded-lg"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="absolute top-2 right-2"
+                              onClick={resetImage}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ) : selectedService?.image ? (
+                          <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+                            <Image
+                              src={selectedService.image}
+                              alt="Current image"
+                              fill
+                              className="object-cover rounded-lg"
+                            />
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-lg">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => fileInputRef.current?.click()}
+                              >
+                                Replace Image
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className="w-full border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-500 transition-colors"
+                            style={{ aspectRatio: '16/9' }}
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <ImageIcon className="w-12 h-12 text-gray-400" />
+                            <p className="text-sm text-gray-500">Click to upload image</p>
+                            <p className="text-xs text-gray-400">PNG, JPG up to 5MB</p>
+                          </div>
+                        )}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          id="image"
+                          name="image"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageChange}
+                          required={!selectedService}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <DialogFooter className="mt-6">
+              <Button 
+                type="submit" 
+                form="service-form"
+                disabled={isAdding || isUpdating || isSubmitting}
+                className="inline-flex items-center gap-2"
+              >
+                {(isAdding || isUpdating) && <Loader2 className="h-4 w-4 animate-spin" />}
+                {selectedService ? 'Save Changes' : 'Add Service'}
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Service</DialogTitle>
-                <DialogDescription>
-                  Fill in the details below to create a new service.
-                </DialogDescription>
-              </DialogHeader>
-              <ServiceForm onSubmit={handleAdd} />
-            </DialogContent>
-          </Dialog>
-        </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-        {filteredServices.map((service) => (
-          <div key={service.id} className="bg-white rounded-lg border overflow-hidden">
-            <div className="relative h-48 w-full">
-              <Image
-                src={service.image}
-                alt={service.name}
-                fill
-                className="object-cover"
-              />
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      ) : services.length === 0 ? (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center justify-center text-center space-y-2">
+              <ImageIcon className="h-8 w-8 text-gray-400" />
+              <h3 className="font-semibold text-lg">No services added yet</h3>
+              <p className="text-sm text-gray-500">Add your first service to showcase on your website.</p>
             </div>
-            <div className="p-4">
-              <h3 className="font-medium">{service.name}</h3>
-              <p className="text-sm text-gray-500 mt-1">{service.description}</p>
-              <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2">Features:</h4>
-                <ul className="text-sm text-gray-500 list-disc pl-4">
-                  {service.features.slice(0, 3).map((feature, index) => (
-                    <li key={index}>{feature}</li>
-                  ))}
-                  {service.features.length > 3 && (
-                    <li>+{service.features.length - 3} more</li>
-                  )}
-                </ul>
-              </div>
-              <div className="flex items-center justify-between mt-4">
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                    service.status === "active"
-                      ? "bg-green-50 text-green-700"
-                      : "bg-gray-50 text-gray-700"
-                  }`}
-                >
-                  {service.status.charAt(0).toUpperCase() + service.status.slice(1)}
-                </span>
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedService(service);
-                        setIsEditDialogOpen(true);
-                      }}
-                      className="inline-flex items-center gap-2"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                      Edit
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit Service</DialogTitle>
-                      <DialogDescription>
-                        Update the service details below.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <ServiceForm 
-                      service={service} 
-                      onSubmit={handleEdit} 
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {services.map((service) => (
+            <Card key={service.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-0">
+                <div className="flex flex-col">
+                  <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+                    <Image
+                      src={service.image}
+                      alt={service.title}
+                      fill
+                      className="object-cover"
                     />
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-lg">{service.title}</h3>
+                      <p className="text-sm text-gray-500 line-clamp-2">{service.shortDescription}</p>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="inline-flex items-center gap-2"
+                        onClick={() => {
+                          setSelectedService(service);
+                          setIsAddDialogOpen(true);
+                        }}
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="inline-flex items-center gap-2"
+                        onClick={() => {
+                          setSelectedService(service);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Service</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedService?.title}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => selectedService && handleDelete(selectedService.id)}
+              disabled={isDeleting}
+              className="inline-flex items-center gap-2"
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

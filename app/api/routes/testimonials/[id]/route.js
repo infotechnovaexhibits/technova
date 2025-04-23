@@ -47,7 +47,7 @@ export async function PUT(req, { params }) {
             }, { status: 400 });
         }
 
-        const { title, status, email, message } = await req.json(); // Correct way to parse body
+        const { title, status, email, message, rating } = await req.json(); // Correct way to parse body
 
         let updateData = {};
 
@@ -55,7 +55,7 @@ export async function PUT(req, { params }) {
         if (status) updateData.status = status;
         if (email) updateData.email = email;
         if (message) updateData.message = message;
-
+        if (rating) updateData.rating = rating;
         if (Object.keys(updateData).length === 0) {
             return NextResponse.json({
                 statusCode: 400,

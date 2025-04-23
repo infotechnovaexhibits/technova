@@ -6,8 +6,13 @@ export interface Testimonial {
   email: string;
   message: string;
   rating: number;
-  createdAt: string;
-  updatedAt: string;
+  status: "pending" | "approved";
+  createdAt?: string;
+  updatedAt?: string;
+  createdOn?: {
+    _seconds: number;
+    _nanoseconds: number;
+  };
 }
 
 export const testimonialsApi = api.injectEndpoints({

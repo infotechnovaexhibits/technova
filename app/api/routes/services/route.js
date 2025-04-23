@@ -6,20 +6,9 @@ import { UploadImage } from "../../controller/imageController";
 // Get all services (GET)
 export async function GET(req) {
     try {
-        // Extract query parameters
-        const { searchParams } = new URL(req.url);
-        const status = searchParams.get("status");
-
-        let services;
-
         // Fetch services based on status filter
-        if (status === "active") {
-            services = await ServiceService.getActiveServices();
-            consoleManager.log("Fetched active services:", services.length);
-        } else {
-            services = await ServiceService.getAllServices();
-            consoleManager.log("Fetched all services:", services.length);
-        }
+        const services = await ServiceService.getAllServices();
+        consoleManager.log("Fetched all services:", services.length);
 
         return NextResponse.json({
             statusCode: 200,
@@ -42,17 +31,16 @@ export async function GET(req) {
 export async function POST(req) {
     try {
         const formData = await req.formData();
-        const name = formData.get("name");
-        const status = formData.get("status");
+        const title = formData.get("title");
         const image = formData.get("image");
         const shortDescription = formData.get("shortDescription");
         const longDescription = formData.get("longDescription");
 
-        if (!name || !image) {
+        if (!title || !image) {
             return NextResponse.json({
                 statusCode: 400,
                 errorCode: "BAD_REQUEST",
-                errorMessage: "Name and image are required",
+                errorMessage: "Title and image are required",
             }, { status: 400 });
         }
 
@@ -60,7 +48,7 @@ export async function POST(req) {
         const imageUrl = await UploadImage(image, 600, 400);
 
         // Save service in DB
-        const newService = await ServiceService.addService({ name, image: imageUrl, status, shortDescription, longDescription });
+        const newService = await ServiceService.addService({ title, image: imageUrl, shortDescription, longDescription });
 
         return NextResponse.json({
             statusCode: 201,

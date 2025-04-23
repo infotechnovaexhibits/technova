@@ -106,12 +106,12 @@ export default function ContactForm({ isOpen, closeModal }: ContactFormProps) {
                       <div className="hover:translate-x-2 transition-transform duration-300">
                         <h4 className="font-semibold text-lg mb-2">EXHIBITION</h4>
                         <p className="text-gray-600 mb-2">To receive your quote on exhibition or for further information</p>
-                        <p className="text-orange-500 font-medium text-lg hover:text-orange-600 transition-colors">+971 565 010 555</p>
+                        <p className="text-orange-500 font-medium text-lg hover:text-orange-600 transition-colors">+91 9318415813</p>
                       </div>
                       <div className="hover:translate-x-2 transition-transform duration-300">
                         <h4 className="font-semibold text-lg mb-2">TECHNOLOGY</h4>
                         <p className="text-gray-600 mb-2">To receive your quote on technology or for further information</p>
-                        <p className="text-orange-500 font-medium text-lg hover:text-orange-600 transition-colors">+971 54 544 9622</p>
+                        <p className="text-orange-500 font-medium text-lg hover:text-orange-600 transition-colors">+91 9773584542</p>
                       </div>
                     </div>
                   </div>

@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Card, CardContent } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -10,311 +14,334 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "../../../components/ui/dialog";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import { Label } from "../../../components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../components/ui/select";
-import { PlusIcon, PencilIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, PencilIcon, TrashIcon, ImageIcon, Loader2 } from "lucide-react";
 import Image from "next/image";
-
-type Brand = {
-  id: string;
-  order: number;
-  name: string;
-  logo: string;
-  website?: string;
-  status: "active" | "inactive";
-};
-
-const initialBrands: Brand[] = [
-  {
-    id: "1",
-    order: 1,
-    name: "TechCorp",
-    logo: "/brands/brand1.png",
-    website: "https://techcorp.com",
-    status: "active",
-  },
-  {
-    id: "2",
-    order: 2,
-    name: "InnovateLabs",
-    logo: "/brands/brand2.png",
-    website: "https://innovatelabs.com",
-    status: "active",
-  },
-];
+import { toast } from "sonner";
+import { useGetBrandsQuery, useAddBrandMutation, useUpdateBrandMutation, useDeleteBrandMutation } from '../../../lib/redux/services/brandsApi';
+import type { Brand } from '../../../lib/redux/services/brandsApi';
 
 export default function BrandsPage() {
-  const [brands, setBrands] = useState<Brand[]>(initialBrands);
+  const { data: brands = [], isLoading } = useGetBrandsQuery();
+  const [addBrand, { isLoading: isAdding }] = useAddBrandMutation();
+  const [updateBrand, { isLoading: isUpdating }] = useUpdateBrandMutation();
+  const [deleteBrand, { isLoading: isDeleting }] = useDeleteBrandMutation();
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
-  const [filter, setFilter] = useState<Brand["status"] | "all">("all");
-  const [isLoading, setIsLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filteredBrands = brands
-    .filter((brand) => filter === "all" ? true : brand.status === filter)
-    .sort((a, b) => a.order - b.order);
-
-  const handleAdd = async (formData: FormData) => {
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      const maxOrder = Math.max(...brands.map(b => b.order), 0);
-      const newBrand: Brand = {
-        id: Math.random().toString(36).substr(2, 9),
-        order: maxOrder + 1,
-        name: formData.get("name") as string,
-        logo: formData.get("logo") as string,
-        website: formData.get("website") as string,
-        status: "active",
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
       };
-      setBrands([...brands, newBrand]);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const resetImage = () => {
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const form = e.currentTarget as HTMLFormElement & {
+        title: HTMLInputElement;
+        image: HTMLInputElement;
+      };
+
+      const title = form.title.value;
+      const imageFile = form.image.files?.[0];
+
+      if (!title?.trim()) {
+        toast.error('Brand name is required');
+        return;
+      }
+
+      if (!imageFile) {
+        toast.error('Brand logo is required');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('title', title.trim());
+      formData.append('image', imageFile);
+      formData.append('status', 'active');
+
+      await addBrand(formData);
+      toast.success('Brand added successfully');
       setIsAddDialogOpen(false);
+      setImagePreview(null);
+      form.reset();
+    } catch (error) {
+      console.error('Failed to add brand:', error);
+      toast.error('Failed to add brand');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleEdit = async (formData: FormData) => {
-    if (!selectedBrand) return;
-    setIsLoading(true);
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      const updatedBrand: Brand = {
-        ...selectedBrand,
-        name: formData.get("name") as string,
-        logo: formData.get("logo") as string,
-        website: formData.get("website") as string,
-        status: formData.get("status") as Brand["status"],
+      if (!selectedBrand?.id) {
+        toast.error('No brand selected for update');
+        return;
+      }
+
+      const form = e.currentTarget as HTMLFormElement & {
+        title: HTMLInputElement;
+        image: HTMLInputElement;
       };
-      setBrands(
-        brands.map((brand) =>
-          brand.id === selectedBrand.id ? updatedBrand : brand
-        )
-      );
-      setIsEditDialogOpen(false);
-    } finally {
-      setIsLoading(false);
+      const formData = new FormData();
+
+      formData.append('id', selectedBrand.id);
+      formData.append('title', form.title.value.trim());
+
+      const imageFile = form.image.files?.[0];
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      formData.append('status', 'active');
+
+      await updateBrand(formData);
+      toast.success('Brand updated successfully');
+      setIsAddDialogOpen(false);
       setSelectedBrand(null);
+      setImagePreview(null);
+      form.reset();
+    } catch (error) {
+      console.error('Failed to update brand:', error);
+      toast.error('Failed to update brand');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const BrandForm = ({ brand, onSubmit }: { 
-    brand?: Brand; 
-    onSubmit: (formData: FormData) => Promise<void> | void 
-  }) => (
-    <form 
-      onSubmit={async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        await onSubmit(formData);
-      }} 
-      className="space-y-4"
-    >
-      <div className="grid gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="name">Brand Name</Label>
-          <Input 
-            id="name" 
-            name="name" 
-            defaultValue={brand?.name}
-            placeholder="Enter brand name" 
-            required 
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="website">Website URL</Label>
-          <Input
-            id="website"
-            name="website"
-            type="url"
-            defaultValue={brand?.website}
-            placeholder="https://example.com"
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="logo">Logo</Label>
-          <div className="flex items-center gap-4">
-            {brand?.logo && (
-              <div className="relative w-20 h-20">
-                <Image
-                  src={brand.logo}
-                  alt={brand.name}
-                  fill
-                  className="object-contain rounded-md"
-                />
-              </div>
-            )}
-            <Input
-              id="logo"
-              name="logo"
-              type="file"
-              accept="image/*"
-              className="flex-1"
-              required={!brand}
-            />
-          </div>
-        </div>
-        {brand && (
-          <div className="grid gap-2">
-            <Label htmlFor="status">Status</Label>
-            <Select name="status" defaultValue={brand.status}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </div>
-      <DialogFooter>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <svg
-                className="animate-spin -ml-1 mr-2 h-4 w-4"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              <span>Saving...</span>
-            </>
-          ) : (
-            brand ? 'Save Changes' : 'Add Brand'
-          )}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteBrand(id);
+      toast.success('Brand deleted successfully');
+      setIsDeleteDialogOpen(false);
+      setSelectedBrand(null);
+    } catch (error) {
+      toast.error('Failed to delete brand');
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Brands Management
-        </h1>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
-          <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-500 w-full sm:w-auto">
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Add Brand
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Brand</DialogTitle>
-                <DialogDescription>
-                  Fill in the details below to add a new brand.
-                </DialogDescription>
-              </DialogHeader>
-              <BrandForm onSubmit={handleAdd} />
-            </DialogContent>
-          </Dialog>
-        </div>
+    <div className="p-0 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Trusted Brands</h1>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="inline-flex items-center gap-2">
+              <PlusIcon className="h-4 w-4" />
+              Add Brand
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{selectedBrand ? 'Edit Brand' : 'Add New Brand'}</DialogTitle>
+              <DialogDescription>
+                {selectedBrand ? 'Update brand details below.' : 'Add a new trusted brand to showcase on your website.'}
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={selectedBrand ? handleUpdate : handleAdd} className="space-y-4">
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="title">Brand Name</Label>
+                  <Input
+                    id="title"
+                    name="title"
+                    placeholder="Enter brand name"
+                    defaultValue={selectedBrand?.title}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="image">Brand Logo</Label>
+                  <div className="flex flex-col items-center gap-4">
+                    {imagePreview ? (
+                      <div className="relative w-60 h-60 rounded-lg overflow-hidden">
+                        <Image
+                          src={imagePreview}
+                          alt="New preview"
+                          fill
+                          className="object-contain"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={resetImage}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ) : selectedBrand?.image ? (
+                      <div className="relative w-60 h-60 rounded-lg overflow-hidden">
+                        <Image
+                          src={selectedBrand.image}
+                          alt="Current logo"
+                          fill
+                          className="object-contain"
+                        />
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            Replace Logo
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="w-60 h-60 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-500 transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <ImageIcon className="w-12 h-12 text-gray-400" />
+                        <p className="text-sm text-gray-500">Click to upload logo</p>
+                        <p className="text-xs text-gray-400">PNG, JPG up to 5MB</p>
+                      </div>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      id="image"
+                      name="image"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                      required={!selectedBrand}
+                    />
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  type="submit" 
+                  disabled={isAdding || isUpdating || isSubmitting}
+                  className="inline-flex items-center gap-2"
+                >
+                  {(isAdding || isUpdating) && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {selectedBrand ? 'Save Changes' : 'Add Brand'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-        {filteredBrands.map((brand) => (
-          <div key={brand.id} className="bg-white rounded-lg border p-4">
-            <div className="relative h-32 w-full mb-4">
-              <Image
-                src={brand.logo}
-                alt={brand.name}
-                fill
-                className="object-contain"
-              />
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      ) : brands.length === 0 ? (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center justify-center text-center space-y-2">
+              <ImageIcon className="h-8 w-8 text-gray-400" />
+              <h3 className="font-semibold text-lg">No brands added yet</h3>
+              <p className="text-sm text-gray-500">Add your first trusted brand to showcase on your website.</p>
             </div>
-            <div className="space-y-2">
-              <h3 className="font-medium text-center">{brand.name}</h3>
-              {brand.website && (
-                <a
-                  href={brand.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:text-blue-500 block text-center truncate"
-                >
-                  {new URL(brand.website).hostname}
-                </a>
-              )}
-              <div className="flex items-center justify-between pt-2">
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                    brand.status === "active"
-                      ? "bg-green-50 text-green-700"
-                      : "bg-gray-50 text-gray-700"
-                  }`}
-                >
-                  {brand.status.charAt(0).toUpperCase() + brand.status.slice(1)}
-                </span>
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedBrand(brand);
-                        setIsEditDialogOpen(true);
-                      }}
-                      className="inline-flex items-center gap-2"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                      Edit
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit Brand</DialogTitle>
-                      <DialogDescription>
-                        Update the brand details below.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <BrandForm 
-                      brand={brand} 
-                      onSubmit={handleEdit} 
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {brands.map((brand) => (
+            <Card key={brand.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-0">
+                <div className="flex flex-col">
+                  <div className="relative w-full bg-white" style={{ aspectRatio: '16/9' }}>
+                    <Image
+                      src={brand.image}
+                      alt={brand.title}
+                      fill
+                      className="object-contain p-4"
                     />
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <h3 className="font-semibold text-center">{brand.title}</h3>
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="inline-flex items-center gap-2"
+                        onClick={() => {
+                          setSelectedBrand(brand);
+                          setIsAddDialogOpen(true);
+                        }}
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="inline-flex items-center gap-2"
+                        onClick={() => {
+                          setSelectedBrand(brand);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Brand</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedBrand?.title}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => selectedBrand && handleDelete(selectedBrand.id)}
+              disabled={isDeleting}
+              className="inline-flex items-center gap-2"
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

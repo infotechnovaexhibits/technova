@@ -12,13 +12,26 @@ export interface ApiError {
   errorMessage: string;
 }
 
-const validateStatus = (response: Response) => {
-  return response.status >= 200 && response.status < 300;
-};
-
 const enhancedBaseQuery = fetchBaseQuery({
   baseUrl: '/api/',
-  prepareHeaders: (headers) => {
+  prepareHeaders: (headers, { endpoint, type }) => {
+    // Only skip Content-Type for mutations that handle file uploads
+    if (type === 'mutation' && endpoint?.match(/(add|update)Brand/)) {
+      // Let browser set multipart/form-data for file uploads
+      return headers;
+    }
+
+    if (type === 'mutation' && endpoint?.match(/(add|update)Gallery/)) {
+      // Let browser set multipart/form-data for file uploads
+      return headers;
+    }
+
+    if (type === 'mutation' && endpoint?.match(/(add|update)Service/)) {
+      // Let browser set multipart/form-data for file uploads
+      return headers;
+    }
+    
+    // For all other requests, use application/json
     headers.set('Content-Type', 'application/json');
     return headers;
   },
@@ -27,6 +40,6 @@ const enhancedBaseQuery = fetchBaseQuery({
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: enhancedBaseQuery,
-  tagTypes: ['Leads', 'Testimonials', 'Services', 'Brands', 'Gallery'],
+  tagTypes: ['Leads', 'Testimonials', 'Services', 'Brands', 'Gallery', 'Count'],
   endpoints: () => ({}),
 }); 

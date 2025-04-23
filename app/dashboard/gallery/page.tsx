@@ -1,330 +1,358 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
   DialogFooter,
 } from "../../../components/ui/dialog";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../components/ui/select";
-import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { Loader2, Plus as PlusIcon, Pencil as PencilIcon, Trash2 as TrashIcon, ImageIcon } from "lucide-react";
 import Image from "next/image";
-
-type GalleryItem = {
-  id: string;
-  order: number;
-  title: string;
-  description: string;
-  image: string;
-  category: string;
-  status: "active" | "inactive";
-};
-
-const initialGallery: GalleryItem[] = [
-  {
-    id: "1",
-    order: 1,
-    title: "Exhibition Design",
-    description: "Modern exhibition stand design",
-    image: "/gallery/exhibition1.jpg",
-    category: "Exhibition",
-    status: "active",
-  },
-  {
-    id: "2",
-    order: 2,
-    title: "Event Setup",
-    description: "Corporate event setup",
-    image: "/gallery/event1.jpg",
-    category: "Event",
-    status: "active",
-  },
-];
+import { useGetGalleryItemsQuery, useAddGalleryItemMutation, useUpdateGalleryItemMutation, useDeleteGalleryItemMutation } from "../../../lib/redux/services/galleryApi";
+import { Card, CardContent } from "../../../components/ui/card";
 
 export default function GalleryPage() {
-  const [gallery, setGallery] = useState<GalleryItem[]>(initialGallery);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
-  const [filter, setFilter] = useState<GalleryItem["status"] | "all">("all");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const filteredGallery = gallery
-    .filter((item) => filter === "all" ? true : item.status === filter)
-    .sort((a, b) => a.order - b.order);
+  const { data: galleryItems = [], isLoading } = useGetGalleryItemsQuery();
+  const [addGalleryItem, { isLoading: isAdding }] = useAddGalleryItemMutation();
+  const [updateGalleryItem, { isLoading: isUpdating }] = useUpdateGalleryItemMutation();
+  const [deleteGalleryItem, { isLoading: isDeleting }] = useDeleteGalleryItemMutation();
 
-  const handleAdd = async (formData: FormData) => {
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      const maxOrder = Math.max(...gallery.map(t => t.order), 0);
-      const newItem: GalleryItem = {
-        id: Math.random().toString(36).substr(2, 9),
-        order: maxOrder + 1,
-        title: formData.get("title") as string,
-        description: formData.get("description") as string,
-        image: formData.get("image") as string,
-        category: formData.get("category") as string,
-        status: "active",
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
       };
-      setGallery([...gallery, newItem]);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData(form); // Use the form directly to create FormData
+
+      // Validate required fields
+      const title = formData.get('title') as string;
+      const image = formData.get('image') as File;
+
+      if (!title?.trim()) {
+        toast.error('Brand name is required');
+        return;
+      }
+
+      if (!image || !(image instanceof File)) {
+        toast.error('Brand logo is required');
+        return;
+      }
+
+      formData.append('title', title.trim());
+      formData.append('image', image);
+      formData.append('status', 'active');
+
+      // Clear any previous data
+      const cleanFormData = new FormData();
+      cleanFormData.append('title', title.trim());
+      cleanFormData.append('image', image);
+
+      await addGalleryItem(cleanFormData);
+      toast.success('Gallery item added successfully');
       setIsAddDialogOpen(false);
+      setImagePreview(null);
+      form.reset();
+    } catch (error) {
+      console.error('Failed to add gallery item:', error);
+      toast.error('Failed to add gallery item');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleEdit = async (formData: FormData) => {
-    if (!selectedItem) return;
-    setIsLoading(true);
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      const updatedItem: GalleryItem = {
-        ...selectedItem,
-        title: formData.get("title") as string,
-        description: formData.get("description") as string,
-        image: formData.get("image") as string,
-        category: formData.get("category") as string,
-        status: formData.get("status") as GalleryItem["status"],
+      if (!selectedItem?.id) {
+        toast.error('No item selected for update');
+        return;
+      }
+
+      const form = e.currentTarget as HTMLFormElement & {
+        title: HTMLInputElement;
+        image: HTMLInputElement;
       };
-      setGallery(
-        gallery.map((item) =>
-          item.id === selectedItem.id ? updatedItem : item
-        )
-      );
-      setIsEditDialogOpen(false);
-    } finally {
-      setIsLoading(false);
+      const formData = new FormData();
+
+      formData.append('id', selectedItem.id);
+      formData.append('title', form.title.value.trim());
+
+      const imageFile = form.image.files?.[0];
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      formData.append('status', selectedItem.status || 'active');
+
+      await updateGalleryItem(formData);
+      toast.success('Gallery item updated successfully');
+      setIsAddDialogOpen(false);
       setSelectedItem(null);
+      setImagePreview(null);
+      form.reset();
+    } catch (error) {
+      console.error('Failed to update gallery item:', error);
+      toast.error('Failed to update gallery item');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const GalleryForm = ({ item, onSubmit }: { 
-    item?: GalleryItem; 
-    onSubmit: (formData: FormData) => Promise<void> | void 
-  }) => (
-    <form 
-      onSubmit={async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        await onSubmit(formData);
-      }} 
-      className="space-y-4"
-    >
-      <div className="grid gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="title">Title</Label>
-          <Input 
-            id="title" 
-            name="title" 
-            defaultValue={item?.title}
-            placeholder="Enter title" 
-            required 
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="description">Description</Label>
-          <textarea
-            id="description"
-            name="description"
-            defaultValue={item?.description}
-            placeholder="Enter description"
-            className="min-h-[100px] w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="category">Category</Label>
-          <Input
-            id="category"
-            name="category"
-            defaultValue={item?.category}
-            placeholder="Enter category"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="image">Image</Label>
-          <div className="flex items-center gap-4">
-            {item?.image && (
-              <div className="relative w-20 h-20">
-                <Image
-                  src={item.image}
-                  alt={item.title}
-                  fill
-                  className="object-cover rounded-md"
-                />
-              </div>
-            )}
-            <Input
-              id="image"
-              name="image"
-              type="file"
-              accept="image/*"
-              className="flex-1"
-              required={!item}
-            />
-          </div>
-        </div>
-        {item && (
-          <div className="grid gap-2">
-            <Label htmlFor="status">Status</Label>
-            <Select name="status" defaultValue={item.status}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this gallery item?')) {
+      try {
+        await deleteGalleryItem(id);
+        toast.success('Gallery item deleted successfully');
+      } catch (error) {
+        console.error('Failed to delete gallery item:', error);
+        toast.error('Failed to delete gallery item');
+      }
+    }
+  };
+
+  const resetImage = () => {
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[200px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-      <DialogFooter>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <svg
-                className="animate-spin -ml-1 mr-2 h-4 w-4"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              <span>Saving...</span>
-            </>
-          ) : (
-            item ? 'Save Changes' : 'Add Item'
-          )}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Gallery Management
-        </h1>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
-          <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-500 w-full sm:w-auto">
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Add Gallery Item
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Gallery Item</DialogTitle>
-                <DialogDescription>
-                  Fill in the details below to create a new gallery item.
-                </DialogDescription>
-              </DialogHeader>
-              <GalleryForm onSubmit={handleAdd} />
-            </DialogContent>
-          </Dialog>
-        </div>
+    <div className="p-0 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Gallery</h1>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="inline-flex items-center gap-2">
+              <PlusIcon className="h-4 w-4" />
+              Add Image
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{selectedItem ? 'Edit Image' : 'Add New Image'}</DialogTitle>
+              <DialogDescription>
+                {selectedItem ? 'Update image details below.' : 'Add a new image to showcase on your website.'}
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={selectedItem ? handleUpdate : handleAdd} className="space-y-4">
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="title">Image Title</Label>
+                  <Input
+                    id="title"
+                    name="title"
+                    placeholder="Enter image title"
+                    defaultValue={selectedItem?.title}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="image">Image</Label>
+                  <div className="flex flex-col items-center gap-4">
+                    {imagePreview ? (
+                      <div className="relative w-60 h-60 rounded-lg overflow-hidden">
+                        <Image
+                          src={imagePreview}
+                          alt="New preview"
+                          fill
+                          className="object-contain"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={resetImage}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ) : selectedItem?.image ? (
+                      <div className="relative w-60 h-60 rounded-lg overflow-hidden">
+                        <Image
+                          src={selectedItem.image}
+                          alt="Current image"
+                          fill
+                          className="object-contain"
+                        />
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            Replace Image
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="w-60 h-60 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-500 transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <ImageIcon className="w-12 h-12 text-gray-400" />
+                        <p className="text-sm text-gray-500">Click to upload image</p>
+                        <p className="text-xs text-gray-400">PNG, JPG up to 5MB</p>
+                      </div>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      id="image"
+                      name="image"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                      required={!selectedItem}
+                    />
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="submit"
+                  disabled={isAdding || isUpdating || isSubmitting}
+                  className="inline-flex items-center gap-2"
+                >
+                  {(isAdding || isUpdating) && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {selectedItem ? 'Save Changes' : 'Add Image'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredGallery.map((item) => (
-          <div key={item.id} className="bg-white rounded-lg border overflow-hidden">
-            <div className="relative h-48 w-full">
-              <Image
-                src={item.image}
-                alt={item.title}
-                fill
-                className="object-cover"
-              />
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      ) : galleryItems.length === 0 ? (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center justify-center text-center space-y-2">
+              <ImageIcon className="h-8 w-8 text-gray-400" />
+              <h3 className="font-semibold text-lg">No images added yet</h3>
+              <p className="text-sm text-gray-500">Add your first image to showcase on your website.</p>
             </div>
-            <div className="p-4">
-              <h3 className="font-medium">{item.title}</h3>
-              <p className="text-sm text-gray-500 mt-1">{item.description}</p>
-              <div className="flex items-center justify-between mt-4">
-                <span className="text-sm text-gray-500">{item.category}</span>
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                    item.status === "active"
-                      ? "bg-green-50 text-green-700"
-                      : "bg-gray-50 text-gray-700"
-                  }`}
-                >
-                  {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 mt-4 border-t pt-4">
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedItem(item);
-                        setIsEditDialogOpen(true);
-                      }}
-                      className="flex-1"
-                    >
-                      <PencilIcon className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit Gallery Item</DialogTitle>
-                      <DialogDescription>
-                        Update the gallery item details below.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <GalleryForm 
-                      item={item} 
-                      onSubmit={handleEdit} 
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {galleryItems.map((item) => (
+            <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-0">
+                <div className="flex flex-col">
+                  <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+                    <Image
+                      src={item.image}
+                      alt={item.title}
+                      fill
+                      className="object-cover"
                     />
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <h3 className="font-semibold text-center">{item.title}</h3>
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="inline-flex items-center gap-2"
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setIsAddDialogOpen(true);
+                        }}
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="inline-flex items-center gap-2"
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Image</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedItem?.title}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => selectedItem && handleDelete(selectedItem.id)}
+              disabled={isDeleting}
+              className="inline-flex items-center gap-2"
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -45,10 +45,8 @@ export async function PUT(req, { params }) {
       let updateData = {};
       const title = formData.get("title");
       const image = formData.get("image"); // File input
-      const status = formData.get("status");
   
       if (title) updateData.title = title;
-      if (status) updateData.status = status;
   
       // Fetch existing brand to get old image URL
       const existingBrand = await BrandsService.getBrandById(id);

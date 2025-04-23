@@ -12,7 +12,7 @@ export async function GET(req) {
         let testimonials;
 
         // Fetch testimonials based on status filter
-        if (status === "active") {
+        if (status === "approved") {
             testimonials = await TestimonialService.getActiveTestimonials();
             consoleManager.log("Fetched active testimonials:", testimonials.length);
         } else {
@@ -40,7 +40,7 @@ export async function GET(req) {
 // Add a new testimonial (POST)
 export async function POST(req) {
     try {
-        const { name, email, message, status } = await req.json();
+        const { name, email, message, status, rating } = await req.json();
 
         
         if (!name || !message) {
@@ -57,6 +57,7 @@ export async function POST(req) {
             email,
             message,
             status,
+            rating,
         });
 
         return NextResponse.json({

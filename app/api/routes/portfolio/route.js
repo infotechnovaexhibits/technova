@@ -6,26 +6,11 @@ import consoleManager from "../../utils/consoleManager";
 // Get all portfolios (GET)
 export async function GET(req) {
     try {
-        // Extract query parameters
-        const { searchParams } = new URL(req.url);
-        const status = searchParams.get("status");
-        const service = searchParams.get("service");
-
-        let portfolios;
 
         // Fetch portfolios based on status filter
-        if (status === "active") {
-            portfolios = await PortfolioService.getActivePortfolios();
-            consoleManager.log("Fetched active portfolios:", portfolios.length);
-        } else {
-            portfolios = await PortfolioService.getAllPortfolios();
-            consoleManager.log("Fetched all portfolios:", portfolios.length);
-        }
+        const portfolios = await PortfolioService.getAllPortfolios();
+        consoleManager.log("Fetched all portfolios:", portfolios.length);
 
-        // Filter by service if provided
-        if (service) {
-            portfolios = portfolios.filter(portfolio => portfolio.service === service);
-        }
 
         return NextResponse.json({
             statusCode: 200,
@@ -49,9 +34,7 @@ export async function POST(req) {
     try {
         const formData = await req.formData();
         const title = formData.get("title");
-        const service = formData.get("service");
         const file = formData.get("image");
-        const status = formData.get("status");
 
         if (!title || !file) {
             return NextResponse.json({
@@ -69,8 +52,6 @@ export async function POST(req) {
         const newPortfolio = await PortfolioService.addPortfolio({
             title,
             image: imageUrl,
-            status,
-            service,
         });
 
         consoleManager.log("✅ Portfolio created successfully:", newPortfolio);

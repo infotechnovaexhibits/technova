@@ -43,15 +43,13 @@ export async function PUT(req, { params }) {
         if (!id) throw new Error("Service ID is required");
 
         let updateData = {};
-        const title = formData.get("name");
-        const status = formData.get("status");
+        const title = formData.get("title");
         const image = formData.get("image");
         const shortDescription = formData.get("shortDescription");
         const longDescription = formData.get("longDescription");
         
 
         if (title) updateData.title = title;
-        if (status) updateData.status = status;
         if (shortDescription) updateData.shortDescription = shortDescription;
         if (longDescription) updateData.longDescription = longDescription;
 

@@ -3,32 +3,26 @@ import { api, ApiResponse } from './api';
 export interface Service {
   id: string;
   title: string;
-  description: string;
-  iconUrl: string;
-  features: string[];
-  price?: number;
-  duration?: string;
-  createdAt: string;
-  updatedAt: string;
+  shortDescription: string;
+  longDescription: string;
+  image: string;
+  createdOn?: string;
+  updatedOn?: string;
 }
 
 export interface AddServiceRequest {
   title: string;
-  description: string;
-  icon: File;
-  features: string[];
-  price?: number;
-  duration?: string;
+  shortDescription: string;
+  longDescription: string;
+  image: File;
 }
 
 export interface UpdateServiceRequest {
   id: string;
   title?: string;
-  description?: string;
-  icon?: File;
-  features?: string[];
-  price?: number;
-  duration?: string;
+  shortDescription?: string;
+  longDescription?: string;
+  image?: File;
 }
 
 export const servicesApi = api.injectEndpoints({
@@ -38,49 +32,32 @@ export const servicesApi = api.injectEndpoints({
       transformResponse: (response: ApiResponse<Service[]>) => response.data,
       providesTags: ['Services']
     }),
-    
+
     getService: builder.query<Service, string>({
       query: (id) => `routes/services/${id}`,
       transformResponse: (response: ApiResponse<Service>) => response.data,
       providesTags: ['Services']
     }),
     
-    addService: builder.mutation<Service, AddServiceRequest>({
-      query: (service) => {
-        const formData = new FormData();
-        formData.append('title', service.title);
-        formData.append('description', service.description);
-        formData.append('icon', service.icon);
-        formData.append('features', JSON.stringify(service.features));
-        if (service.price) formData.append('price', service.price.toString());
-        if (service.duration) formData.append('duration', service.duration);
-
-        return {
-          url: 'routes/services',
-          method: 'POST',
-          body: formData,
-          formData: true,
-        };
-      },
+    addService: builder.mutation<Service, FormData>({
+      query: (formData) => ({
+        url: 'routes/services',
+        method: 'POST',
+        body: formData,
+        formData: true
+      }),
       transformResponse: (response: ApiResponse<Service>) => response.data,
       invalidatesTags: ['Services']
     }),
     
-    updateService: builder.mutation<Service, UpdateServiceRequest>({
-      query: ({ id, ...service }) => {
-        const formData = new FormData();
-        if (service.title) formData.append('title', service.title);
-        if (service.description) formData.append('description', service.description);
-        if (service.icon) formData.append('icon', service.icon);
-        if (service.features) formData.append('features', JSON.stringify(service.features));
-        if (service.price) formData.append('price', service.price.toString());
-        if (service.duration) formData.append('duration', service.duration);
-
+    updateService: builder.mutation<Service, FormData>({
+      query: (formData) => {
+        const id = formData.get('id');
         return {
           url: `routes/services/${id}`,
           method: 'PUT',
           body: formData,
-          formData: true,
+          formData: true
         };
       },
       transformResponse: (response: ApiResponse<Service>) => response.data,
@@ -90,7 +67,7 @@ export const servicesApi = api.injectEndpoints({
     deleteService: builder.mutation<void, string>({
       query: (id) => ({
         url: `routes/services/${id}`,
-        method: 'DELETE',
+        method: 'DELETE'
       }),
       invalidatesTags: ['Services']
     }),

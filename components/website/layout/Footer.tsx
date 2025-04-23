@@ -109,7 +109,7 @@ const Footer = () => {
                     <p className="text-gray-600">Inderprastha Awasiya Yojna</p>
                     <p className="text-gray-600">Loni, Ghaziabad - 201102</p>      
                     <p className="text-gray-600">Email: contact@technovaexhibits.com</p>
-                            <p className="mt-1 text-gray-900 font-medium">+91 9818000000</p>
+                     <p className="mt-1 text-gray-900 font-medium">+91 9773584542</p>
             </div>
             <div className="mt-8">
               <div className="flex gap-6">

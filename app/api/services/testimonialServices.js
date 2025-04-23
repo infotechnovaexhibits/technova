@@ -40,7 +40,7 @@ class TestimonialService {
         const allTestimonials = await this.getAllTestimonials(forceRefresh);
 
         // Filter testimonials where status is 'active'
-        const activeTestimonials = allTestimonials.filter((testimonial) => testimonial.status === "active");
+        const activeTestimonials = allTestimonials.filter((testimonial) => testimonial.status === "approved");
 
         consoleManager.log("Returning active testimonials. Count:", activeTestimonials.length);
         return activeTestimonials;
