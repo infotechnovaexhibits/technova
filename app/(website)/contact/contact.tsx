@@ -300,7 +300,7 @@ export default function Contact() {
                       className="flex items-center justify-center text-red-600"
                     >
                       <AlertTriangle className="w-4 h-4 mr-1.5" />
-                      Failed to send message. Please try again. {error?.data?.message}
+                      Failed to send message. Please try again. {(error as any)?.data?.message}
                     </motion.div>
                   )}
                 </div>

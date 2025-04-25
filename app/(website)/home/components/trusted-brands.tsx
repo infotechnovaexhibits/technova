@@ -7,43 +7,37 @@ import { motion } from 'framer-motion';
 const brands = [
   {
     name: "Microsoft",
-    logo: "/images/brands/microsoft.svg",
-    grayscale: true
+    logo: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
   },
   {
     name: "Google",
-    logo: "/images/brands/google.svg",
-    grayscale: true
+    logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
   },
   {
     name: "Apple",
-    logo: "/images/brands/apple.svg",
-    grayscale: true
+    logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
   },
   {
     name: "Amazon",
-    logo: "/images/brands/amazon.svg",
-    grayscale: true
+    logo: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
   },
   {
     name: "Samsung",
-    logo: "/images/brands/samsung.svg",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
     grayscale: true
   },
   {
     name: "IBM",
-    logo: "/images/brands/ibm.svg",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg",
     grayscale: true
   },
   {
     name: "Intel",
-    logo: "/images/brands/intel.svg",
-    grayscale: true
+    logo: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Intel-logo.svg",
   },
   {
     name: "Oracle",
-    logo: "/images/brands/oracle.svg",
-    grayscale: true
+    logo: "https://upload.wikimedia.org/wikipedia/commons/5/50/Oracle_logo.svg",
   }
 ];
 

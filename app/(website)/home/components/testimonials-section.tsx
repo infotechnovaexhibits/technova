@@ -9,32 +9,50 @@ import Link from 'next/link';
 export const testimonials = [
   {
     id: 1,
-    name: "Sarah Johnson",
-    content: "Technova transformed our exhibition presence completely. Their innovative design approach and attention to detail helped us stand out at every event.",
+    name: "Rohit Mehra",
+    content: "Technova created an outstanding exhibition stall for us at Auto Expo. The execution was flawless, and it attracted a lot of attention from visitors.",
     rating: 5
   },
   {
     id: 2,
-    name: "Michael Chen",
-    content: "Working with Technova was a game-changer for our brand. Their exhibition stands perfectly captured our vision and exceeded our expectations.",
+    name: "Priya Nair",
+    content: "We hired Technova for the India International Trade Fair, and their design sense was truly impressive. The team was professional and delivered right on time.",
     rating: 5
   },
   {
     id: 3,
-    name: "Emma Davis",
-    content: "The team's creativity and professionalism are unmatched. They delivered an outstanding exhibition stand that generated significant business leads.",
+    name: "Arjun Reddy",
+    content: "What Technova delivered was more than just a stall — it was a full brand experience. We saw a significant increase in leads during the exhibition.",
     rating: 5
   },
   {
     id: 4,
-    name: "John Smith",
-    content: "Technova's exhibition stands are a cut above the rest. They truly understand our brand and delivered a design that exceeded our expectations.",
+    name: "Anita Sharma",
+    content: "The design aesthetics, attention to detail, and timely delivery were top-notch. Technova helped our FMCG brand stand out beautifully at the trade show.",
     rating: 5
   },
   {
     id: 5,
-    name: "Jane Doe",
-    content: "The attention to detail and professionalism shown by the team was exceptional. Our stand attracted more visitors than ever before.",
+    name: "Karan Patel",
+    content: "At the Vibrant Gujarat Summit, the stall designed by Technova truly stood out. We had great client interactions and saw double the usual footfall.",
+    rating: 5
+  },
+  {
+    id: 6,
+    name: "Neha Sood",
+    content: "Our experience with Technova at the AgriTech Expo was fantastic. They captured our concept perfectly and brought it to life with stunning visuals.",
+    rating: 5
+  },
+  {
+    id: 7,
+    name: "Siddharth Jain",
+    content: "Technova’s innovative booth design at the Jewellery Expo made us the talk of the event. Their creative team really understands luxury branding.",
+    rating: 5
+  },
+  {
+    id: 8,
+    name: "Varun Krishnan",
+    content: "We partnered with Technova for a marine tech exhibition. The entire process was smooth, and the end result was nothing short of spectacular.",
     rating: 5
   }
 ];
