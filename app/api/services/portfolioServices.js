@@ -25,7 +25,7 @@ class PortfolioService {
     static async getAllPortfolios(forceRefresh = false) {
         if (forceRefresh || !this.isInitialized) {
             consoleManager.log("Force refreshing portfolios from Firestore...");
-            const snapshot = await db.collection("portfolios").get();
+            const snapshot = await db.collection("portfolios").orderBy("createdOn", "desc").get();
             this.portfolios = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
             this.isInitialized = true;
         } else {

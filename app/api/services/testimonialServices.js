@@ -25,7 +25,7 @@ class TestimonialService {
     static async getAllTestimonials(forceRefresh = false) {
         if (forceRefresh || !this.isInitialized) {
             consoleManager.log("Force refreshing testimonials from Firestore...");
-            const snapshot = await db.collection("testimonials").get();
+            const snapshot = await db.collection("testimonials").orderBy("createdOn", "desc").get();
             this.testimonials = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
             this.isInitialized = true;
         } else {

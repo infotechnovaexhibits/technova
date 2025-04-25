@@ -25,7 +25,7 @@ class LeadService {
     static async getAllLeads(forceRefresh = false) {
         if (forceRefresh || !this.isInitialized) {
             consoleManager.log("Force refreshing leads from Firestore...");
-            const snapshot = await db.collection("leads").get();
+            const snapshot = await db.collection("leads").orderBy("createdOn", "desc").get();
             this.leads = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
             this.isInitialized = true;
         } else {

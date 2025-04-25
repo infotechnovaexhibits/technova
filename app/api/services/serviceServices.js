@@ -25,7 +25,7 @@ class ServiceService {
     static async getAllServices(forceRefresh = false) {
         if (forceRefresh || !this.isInitialized) {
             consoleManager.log("Force refreshing services from Firestore...");
-            const snapshot = await db.collection("services").get();
+            const snapshot = await db.collection("services").orderBy("createdOn", "desc").get();
             this.services = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
             this.isInitialized = true;
         } else {

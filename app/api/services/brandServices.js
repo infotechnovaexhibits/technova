@@ -25,7 +25,7 @@ class BrandService {
     static async getAllBrands(forceRefresh = false) {
         if (forceRefresh || !this.isInitialized) {
             consoleManager.log("Force refreshing brands from Firestore...");
-            const snapshot = await db.collection("brands").get();
+            const snapshot = await db.collection("brands").orderBy("createdOn", "desc").get();
             this.brands = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
             this.isInitialized = true;
         } else {
