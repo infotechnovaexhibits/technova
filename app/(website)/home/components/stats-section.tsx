@@ -63,8 +63,8 @@ const Counter = ({ value, suffix }: { value: number; suffix: string }) => {
 
 export const StatsSection = () => {
   return (
-    <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
-      <div className="container mx-auto px-4">
+    <section className="relative py-16 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
+      <div className="relative container mx-auto px-4 z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -81,7 +81,7 @@ export const StatsSection = () => {
         </motion.div>
 
         {/* Background Design */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 -z-10">
           <div className="absolute inset-0 opacity-30">
             <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
             <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
