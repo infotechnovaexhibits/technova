@@ -128,14 +128,15 @@ export default function GalleryPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this gallery item?')) {
-      try {
-        await deleteGalleryItem(id);
-        toast.success('Gallery item deleted successfully');
-      } catch (error) {
-        console.error('Failed to delete gallery item:', error);
-        toast.error('Failed to delete gallery item');
-      }
+    try {
+      await deleteGalleryItem(id);
+      toast.success('Gallery item deleted successfully');
+      setIsDeleteDialogOpen(false);
+      setSelectedItem(null);
+    } catch (error) {
+      console.error('Failed to delete gallery item:', error);
+      const errorMessage = (error as any)?.data?.message || 'Failed to delete gallery item';
+      toast.error(errorMessage);
     }
   };
 

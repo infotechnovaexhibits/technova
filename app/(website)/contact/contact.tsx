@@ -1,18 +1,48 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Phone, 
   MapPin,
   Mail,
   Facebook,
   Linkedin,
-  MessageCircle
+  MessageCircle,
+  Loader2,
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { useAddLeadMutation } from '../../../lib/redux/services/leadsApi';
 
 export default function Contact() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: ''
+  });
+  const [addLead, { isLoading, isSuccess, isError, error }] = useAddLeadMutation();
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitAttempted(true);
+
+    try {
+      await addLead({ ...formData, status: 'new' }).unwrap();
+      setFormData({ name: '', email: '', phone: '', message: '' });
+    } catch (err) {
+      console.error('Failed to send lead:', err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Banner */}
@@ -152,7 +182,7 @@ export default function Contact() {
             className="bg-white rounded-2xl shadow-sm p-8"
           >
             <h2 className="text-2xl font-semibold mb-8 text-gray-800">Send us a Message</h2>
-            <form className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -167,6 +197,8 @@ export default function Contact() {
                     id="name"
                     name="name"
                     placeholder="Your name"
+                    value={formData.name}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
                     required
                   />
@@ -185,6 +217,8 @@ export default function Contact() {
                     id="email"
                     name="email"
                     placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
                     required
                   />
@@ -204,6 +238,8 @@ export default function Contact() {
                   id="phone"
                   name="phone"
                   placeholder="+91 XXXXX XXXXX"
+                  value={formData.phone}
+                  onChange={handleInputChange}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
                   required
                 />
@@ -222,6 +258,8 @@ export default function Contact() {
                   name="message"
                   rows={4}
                   placeholder="Your message here..."
+                  value={formData.message}
+                  onChange={handleInputChange}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 resize-none"
                   required
                 ></textarea>
@@ -232,10 +270,41 @@ export default function Contact() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
                 type="submit"
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-blue-700 transition-all duration-300"
+                className="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-blue-700 transition-all duration-300 flex items-center justify-center disabled:opacity-60"
+                disabled={isLoading}
               >
-                Send Message
+                {isLoading ? (
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Sending...</>
+                ) : (
+                  'Send Message'
+                )}
               </motion.button>
+
+              {/* Submission Status Messages */}
+              {submitAttempted && (
+                <div className="mt-4 text-center text-sm">
+                  {isSuccess && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center justify-center text-green-600"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1.5" />
+                      Message sent successfully! We'll be in touch soon.
+                    </motion.div>
+                  )}
+                  {isError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center justify-center text-red-600"
+                    >
+                      <AlertTriangle className="w-4 h-4 mr-1.5" />
+                      Failed to send message. Please try again. {error?.data?.message}
+                    </motion.div>
+                  )}
+                </div>
+              )}
             </form>
           </motion.div>
         </div>

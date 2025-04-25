@@ -2,7 +2,9 @@
 
 import { Fragment, useState } from 'react';
 import { XMarkIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { Transition } from '@headlessui/react';
+import { useAddLeadMutation } from '../../../lib/redux/services/leadsApi';
 
 interface ContactFormProps {
   isOpen: boolean;
@@ -18,28 +20,43 @@ export default function ContactForm({ isOpen, closeModal }: ContactFormProps) {
     message: ''
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [addLead, { isLoading }] = useAddLeadMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Submitted Data:', formData);
-    setIsSubmitted(true);
+    setSubmissionError(null);
 
-    // Auto close after 2 seconds and reset state
-    setTimeout(() => {
-      closeModal();
-      // Reset states after modal is closed
+    const leadData = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      message: `${formData.subject}: ${formData.message}`,
+      status: 'new' as const
+    };
+
+    try {
+      await addLead(leadData).unwrap();
+      setIsSubmitted(true);
+
       setTimeout(() => {
-        setIsSubmitted(false);
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          subject: '',
-          message: ''
-        });
-      }, 500);
-    }, 2000);
+        closeModal();
+        setTimeout(() => {
+          setIsSubmitted(false);
+          setFormData({
+            name: '',
+            email: '',
+            phone: '',
+            subject: '',
+            message: ''
+          });
+        }, 500);
+      }, 2000);
+    } catch (err: any) {
+      console.error('Failed to submit lead:', err);
+      setSubmissionError(err.data?.message || 'An unexpected error occurred. Please try again.');
+      setIsSubmitted(false);
+    }
   };
 
   return (
@@ -186,21 +203,35 @@ export default function ContactForm({ isOpen, closeModal }: ContactFormProps) {
                     <div className="pt-8 space-y-4">
                       <button
                         type="submit"
-                        className="mx-auto block w-64 bg-gray-900 text-white px-8 py-3 rounded-full font-semibold hover:bg-gray-800 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isSubmitted}
+                        className="mx-auto block w-64 bg-gray-900 text-white px-8 py-3 rounded-full font-semibold hover:bg-gray-800 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        disabled={isLoading || isSubmitted}
                       >
-                        {isSubmitted ? 'Message Sent!' : 'Send message'}
+                        {isLoading ? (
+                           <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Sending...</>
+                        ) : isSubmitted ? (
+                           <><CheckCircleIcon className="h-5 w-5 mr-2" /> Message Sent!</>
+                        ) : (
+                          'Send message'
+                        )}
                       </button>
 
-                      {isSubmitted && (
-                        <div className="text-center animate-fade-in">
-                          <div className="flex items-center justify-center text-green-500 mb-2">
-                            <CheckCircleIcon className="h-6 w-6 mr-2" />
-                            <span className="text-lg font-medium">Thank you!</span>
+                      <div className="text-center min-h-[40px] flex items-center justify-center">
+                        {isSubmitted && !isLoading && (
+                          <div className="animate-fade-in">
+                            <div className="flex items-center justify-center text-green-500 mb-1">
+                              <CheckCircleIcon className="h-6 w-6 mr-2" />
+                              <span className="text-lg font-medium">Thank you!</span>
+                            </div>
+                            <p className="text-gray-600 text-sm">We'll contact you soon.</p>
                           </div>
-                          <p className="text-gray-600">We'll contact you soon.</p>
-                        </div>
-                      )}
+                        )}
+                        {submissionError && !isLoading && (
+                          <div className="flex items-center justify-center text-red-500 animate-fade-in">
+                            <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
+                            <span className="text-sm">{submissionError}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </form>
                 </div>

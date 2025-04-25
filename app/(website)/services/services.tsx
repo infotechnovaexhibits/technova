@@ -4,49 +4,14 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Building } from 'lucide-react';
+import { Building, Loader2, AlertTriangle } from 'lucide-react';
 import { TrustedBrands } from '../home/components/trusted-brands';
-
-const services = [
-  {
-    id: 1,
-    name: "Custom Exhibition Stands",
-    description: "Transform your business presence with our bespoke exhibition stands designed to make a lasting impression.",
-    image: "/images/service1.jpg",
-    slug: "custom-exhibition-stands"
-  },
-  {
-    id: 2,
-    name: "Mezzanine Stands",
-    description: "Maximize your exhibition space with our innovative double-decker stands for substantial driven spaces.",
-    image: "/images/service2.jpg",
-    slug: "mezzanine-stands"
-  },
-  {
-    id: 3,
-    name: "Country Pavilion",
-    description: "Showcase your nation's excellence with our expertly designed and managed country pavilions.",
-    image: "/images/service3.jpg",
-    slug: "country-pavilion"
-  },
-  {
-    id: 4,
-    name: "Interior/Exterior Design",
-    description: "Create stunning spaces that reflect your brand's personality with our flamboyant design solutions.",
-    image: "/images/service4.jpg",
-    slug: "interior-exterior-design"
-  },
-  {
-    id: 5,
-    name: "Exhibition Management",
-    description: "End-to-end exhibition management services ensuring seamless execution of your event.",
-    image: "/images/service5.jpg",
-    slug: "exhibition-management"
-  }
-];
-
+import { useGetServicesQuery } from '../../../lib/redux/services/servicesApi';
+import { Service } from '../../../lib/redux/services/servicesApi';
 
 export default function Services() {
+  const { data: services, error, isLoading } = useGetServicesQuery();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Banner */}
@@ -114,37 +79,69 @@ export default function Services() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:place-items-center">
-          {services.map((service, index) => (
-            <motion.div
-              key={service.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 w-full max-w-[400px]"
-            >
-              <div className="relative h-64 w-full">
-                <Image
-                  src={service.image}
-                  alt={service.name}
-                  fill
-                  className="object-cover hover:scale-105 transition-transform duration-700"
-                />
-              </div>
-              <div className="p-8">
-                <h3 className="text-xl font-semibold mb-3 text-gray-900">{service.name}</h3>
-                <p className="text-gray-600 mb-6">{service.description}</p>
-                <Link 
-                  href={`/services/${service.slug}`}
-                  className="inline-flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-sm hover:shadow-md"
-                >
-                  Know More
-                </Link>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-16">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+            <p className="ml-4 text-xl text-gray-600">Loading Services...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="flex flex-col justify-center items-center py-16 px-4 text-center">
+            <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
+            <p className="text-xl text-red-600">
+              Failed to load services. Please try again later.
+            </p>
+          </div>
+        )}
+
+        {/* Services Grid */}
+        {!isLoading && !error && services && services.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:place-items-center">
+            {services.map((service: Service, index: number) => (
+              <motion.div
+                key={service.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 w-full max-w-[400px]"
+              >
+                <div className="relative h-64 w-full">
+                  <Image
+                    src={service.image}
+                    alt={service.title}
+                    fill
+                    className="object-cover hover:scale-105 transition-transform duration-700"
+                  />
+                </div>
+                <div className="p-8">
+                  <h3 className="text-xl font-semibold mb-3 text-gray-900">{service.title}</h3>
+                  <p className="text-gray-600 mb-6">
+                    {service.shortDescription.length > 100
+                      ? `${service.shortDescription.substring(0, 100)}......`
+                      : service.shortDescription}
+                  </p>
+                  <Link 
+                    href={`/services/${service.id}`}
+                    className="inline-flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-sm hover:shadow-md"
+                  >
+                    Know More
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !error && (!services || services.length === 0) && (
+          <div className="text-center py-16">
+            <p className="text-xl text-gray-500">No services available at the moment.</p>
+          </div>
+        )}
 
         {/* Trusted Brands Section */}
         <motion.div

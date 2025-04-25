@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { FaFacebook, FaWhatsapp, FaLinkedin } from 'react-icons/fa';
 
 const socialLinks = [
-  { icon: FaFacebook, href: "https://facebook.com" },
-  { icon: FaWhatsapp, href: "https://wa.me/+971565010555" },
-  { icon: FaLinkedin, href: "https://linkedin.com" },
+  { icon: FaFacebook, href: "https://www.facebook.com/technovaexhibits" },
+  { icon: FaWhatsapp, href: "https://wa.me/+919773584542" },
+  { icon: FaLinkedin, href: "https://www.linkedin.com/company/technova-exhibits" },
 ];
 
 const quickLinks = [

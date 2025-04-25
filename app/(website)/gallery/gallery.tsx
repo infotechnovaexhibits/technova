@@ -1,74 +1,40 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Award, Camera } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Award, Camera, Loader2, AlertTriangle } from 'lucide-react';
+import { useGetGalleryItemsQuery } from '../../../lib/redux/services/galleryApi';
+import { GalleryItem } from '../../../lib/redux/services/galleryApi';
 
-const images = [
-  {
-    src: "/images/gallery/image1.jpg",
-    alt: "Exhibition Stand Design 1"
-  },
-  {
-    src: "/images/gallery/image2.jpg",
-    alt: "Exhibition Stand Design 2"
-  },
-  {
-    src: "/images/gallery/image3.jpg",
-    alt: "Exhibition Stand Design 3"
-  },
-  {
-    src: "/images/gallery/image4.jpg",
-    alt: "Exhibition Stand Design 4"
-  },
-  {
-    src: "/images/gallery/image5.jpg",
-    alt: "Exhibition Stand Design 5"
-  },
-  {
-    src: "/images/gallery/image6.jpg",
-    alt: "Exhibition Stand Design 6"
-  },
-  {
-    src: "/images/gallery/image7.jpg",
-    alt: "Exhibition Stand Design 7"
-  },
-  {
-    src: "/images/gallery/image8.jpg",
-    alt: "Exhibition Stand Design 8"
-  },
-  {
-    src: "/images/gallery/image9.jpg",
-    alt: "Exhibition Stand Design 9"
-  },
-  {
-    src: "/images/gallery/image10.jpg",
-    alt: "Exhibition Stand Design 10"
-  },
-  {
-    src: "/images/gallery/image11.jpg",
-    alt: "Exhibition Stand Design 11"
-  },
-  {
-    src: "/images/gallery/image12.jpg",
-    alt: "Exhibition Stand Design 12"
-  }
-];
+interface MappedImage {
+  src: string;
+  alt: string;
+}
 
 export default function Gallery() {
+  const { data: galleryItems, error, isLoading } = useGetGalleryItemsQuery();
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
+
+  // Map API data to the format expected by the component
+  const images: MappedImage[] = React.useMemo(() => {
+    if (!galleryItems) return [];
+    return galleryItems.map((item: GalleryItem) => ({
+      src: item.image, // Assuming item.image contains the full URL or path
+      alt: item.title
+    }));
+  }, [galleryItems]);
 
   const closeModal = () => setSelectedImage(null);
   
   const showNext = () => {
-    if (selectedImage !== null) {
+    if (selectedImage !== null && images.length > 0) {
       setSelectedImage((selectedImage + 1) % images.length);
     }
   };
   
   const showPrevious = () => {
-    if (selectedImage !== null) {
+    if (selectedImage !== null && images.length > 0) {
       setSelectedImage((selectedImage - 1 + images.length) % images.length);
     }
   };
@@ -85,7 +51,7 @@ export default function Gallery() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedImage]);
+  }, [selectedImage, images.length]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -135,42 +101,63 @@ export default function Gallery() {
         </motion.div>
 
         {/* Gallery Grid */}
-        <motion.div 
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={{
-            hidden: {},
-            visible: {
-              transition: {
-                staggerChildren: 0.1
+        {isLoading && (
+          <div className="flex justify-center items-center py-16">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+            <p className="ml-4 text-xl text-gray-600">Loading Gallery...</p>
+          </div>
+        )}
+        {error && (
+           <div className="flex justify-center items-center py-16 px-4 text-center">
+             <AlertTriangle className="h-12 w-12 text-red-500 mr-4" />
+             <p className="text-xl text-red-600">
+               Failed to load gallery items. Please try again later.
+             </p>
+           </div>
+        )}
+        {!isLoading && !error && images.length === 0 && (
+           <div className="text-center py-16">
+             <p className="text-xl text-gray-500">The gallery is currently empty.</p>
+           </div>
+        )}
+        {!isLoading && !error && images.length > 0 && (
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={{
+              hidden: {},
+              visible: {
+                transition: {
+                  staggerChildren: 0.1
+                }
               }
-            }
-          }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto"
-        >
-          {images.map((image, index) => (
-            <motion.div
-              key={index}
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-              }}
-              className="relative w-full rounded-xl overflow-hidden group cursor-pointer"
-              style={{ aspectRatio: '4/3' }}
-              onClick={() => setSelectedImage(index)}
-            >
-              <Image
-                src={image.src}
-                alt={image.alt}
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </motion.div>
-          ))}
-        </motion.div>
+            }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto"
+          >
+            {images.map((image: MappedImage, index: number) => (
+              <motion.div
+                key={galleryItems ? galleryItems[index].id : index}
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+                }}
+                className="relative w-full rounded-xl overflow-hidden group cursor-pointer"
+                style={{ aspectRatio: '4/3' }}
+                onClick={() => setSelectedImage(index)}
+              >
+                <Image
+                  src={image.src}
+                  alt={image.alt}
+                  fill
+                  className="object-contain transition-transform duration-500 group-hover:scale-110"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </div>
 
       {/* CTA Section - Full Width */}
@@ -237,7 +224,7 @@ export default function Gallery() {
 
       {/* Modal */}
       <AnimatePresence>
-        {selectedImage !== null && (
+        {selectedImage !== null && images.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

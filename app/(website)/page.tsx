@@ -6,6 +6,8 @@ import { TestimonialsSection } from "./home/components/testimonials-section";
 import { OurProcess } from "./home/components/our-process";
 import { ContactCTA } from "./home/components/contact-cta";
 import { AboutSection } from "./home/components/about-section";
+import { GallerySection } from "./home/components/gallery-section";
+
 export default function Home() {
   return (
     <main>
@@ -17,6 +19,9 @@ export default function Home() {
 
       {/* Services We Offer */}
       <ServicesSection />
+
+      {/* Gallery Section */}
+      <GallerySection />
 
       {/* Key Statistics */}
       <StatsSection />
