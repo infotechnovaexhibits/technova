@@ -155,7 +155,7 @@ export default function Contact() {
                   <MessageCircle className="text-green-600 w-5 h-5" />
                 </a>
                 <a 
-                  href="https://facebook.com/your-page" 
+                  href="https://www.facebook.com/share/1Bk21Ac1o1/?mibextid=wwXIfr" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="bg-blue-50 p-4 rounded-xl hover:bg-blue-100 transition-all duration-300"
@@ -163,7 +163,7 @@ export default function Contact() {
                   <Facebook className="text-blue-600 w-5 h-5" />
                 </a>
                 <a 
-                  href="https://linkedin.com/company/your-company" 
+                  href="https://www.linkedin.com/in/technova-exhibits-a92031362/" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="bg-[#0077b5]/10 p-4 rounded-xl hover:bg-[#0077b5]/20 transition-all duration-300"

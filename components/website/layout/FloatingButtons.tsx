@@ -30,13 +30,13 @@ const FloatingButtons = () => {
     },
     { 
       icon: Linkedin, 
-      href: 'https://linkedin.com/company/your-company',
+      href: 'https://www.linkedin.com/in/technova-exhibits-a92031362/',
       bgColor: 'bg-gradient-to-r from-blue-600 to-purple-600',
       hoverBgColor: 'hover:opacity-90'
     },
     { 
       icon: Facebook, 
-      href: 'https://facebook.com/your-page',
+      href: 'https://www.facebook.com/share/1Bk21Ac1o1/?mibextid=wwXIfr',
       bgColor: 'bg-gradient-to-r from-blue-600 to-purple-600',
       hoverBgColor: 'hover:opacity-90'
     },
